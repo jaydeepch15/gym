@@ -1,0 +1,25 @@
+{
+  "summary": "Iteration 3 verifies the YouTube orientation fix and player video sizing. Backend: 6 new tests for POST /api/videos/youtube confirming orientation='portrait' for /shorts/ URLs, 'landscape' for watch URLs and youtu.be aliases, plus orientation is serialized in GET /api/videos and /api/videos/by-exercise. Frontend: Session player /session/full-body-a renders portrait wrapper (data-testid=player-visual-yt-portrait) at 320x568.875px (h>w), landscape wrapper (player-visual-yt-landscape) at 536x301.5px (w>h), and uploaded videos in player-visual-upload wrapper with computed object-fit='contain' (no cropping). All 33 backend tests (regression + new) pass.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_youtube_orientation.py",
+    "/app/backend/tests/test_videos.py",
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/iter3_yt_results.xml",
+    "/app/test_reports/pytest/iter3_full.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py _serialize_video: 'if /shorts/ in yurl.lower()' correctly detects Shorts by URL; robust across youtu.be and www. variants since the substring only exists in Shorts URLs.",
+    "SessionPlayer ExerciseVisual: portrait uses fixed w-64/w-80 which yields a small 320px width on desktop — user may still want a wider portrait option; but per spec (native aspect + not-square) this is correct."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_youtube_orientation.py (new)"
+  ],
+  "success_rate": {"backend": "100% (33/33)", "frontend": "100% (3/3 visual variants verified)"},
+  "seed_data_creation": "Temporary YouTube links (Neck rolls Shorts, Barbell Back Squat regular) and one uploaded mp4 for Barbell Back Squat; all cleaned up via DELETE /api/videos/{id} after each test.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Backend endpoint POST /api/videos/youtube returns 'orientation' field: 'portrait' iff URL contains '/shorts/', else 'landscape'. Frontend SessionPlayer selectors: player-visual-yt-portrait (aspect 9/16), player-visual-yt-landscape (aspect-video), player-visual-upload (object-contain video). To reach 'Neck rolls' in full-body-a click player-next-btn 3 times. /tmp/tiny.mp4 is used as an upload fixture; regenerate with dd if absent."
+}

@@ -114,13 +114,16 @@ def _serialize_video(doc: Dict[str, Any]) -> Dict[str, Any]:
         out["url"] = f"/api/uploads/{doc['filename']}"
     elif kind == "youtube" and doc.get("youtube_id"):
         yid = doc["youtube_id"]
+        yurl = doc.get("youtube_url") or ""
+        orientation = "portrait" if "/shorts/" in yurl.lower() else "landscape"
         params = (
             f"autoplay=1&mute=1&loop=1&playlist={yid}"
             "&controls=0&modestbranding=1&rel=0&playsinline=1&disablekb=1&iv_load_policy=3"
         )
         out["embed_url"] = f"https://www.youtube.com/embed/{yid}?{params}"
         out["thumbnail_url"] = f"https://i.ytimg.com/vi/{yid}/hqdefault.jpg"
-        out["url"] = doc.get("youtube_url")
+        out["orientation"] = orientation
+        out["url"] = yurl
     return out
 
 

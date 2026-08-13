@@ -247,7 +247,7 @@ export default function SessionPlayer() {
 
             {/* Top bar */}
             <div className="fixed inset-x-0 top-0 z-30 hairline-b bg-obsidian/70 backdrop-blur-sm">
-                <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
                     <button
                         data-testid={TID.playerExitBtn}
                         onClick={() => nav("/")}
@@ -292,7 +292,7 @@ export default function SessionPlayer() {
             </div>
 
             {/* Content */}
-            <main className="pt-24 pb-40 max-w-5xl mx-auto px-4 sm:px-6 min-h-screen flex items-start justify-center">
+            <main className="pt-24 pb-40 max-w-6xl mx-auto px-4 sm:px-6 min-h-screen flex items-start justify-center">
                 {phase === "done" ? (
                     <EndingScreen block={block} onExit={() => nav("/")} sessionId={session.id} />
                 ) : block?.kind === "title" ? (
@@ -312,7 +312,7 @@ export default function SessionPlayer() {
 
             {/* Bottom controls */}
             <div className="fixed inset-x-0 bottom-0 z-30 hairline-t bg-obsidian/80 backdrop-blur-sm">
-                <div className="max-w-5xl mx-auto px-4 sm:px-6 h-24 flex items-center justify-between gap-3">
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 h-24 flex items-center justify-between gap-3">
                     <button
                         data-testid={TID.playerPrevBtn}
                         onClick={gotoPrev}
@@ -424,10 +424,17 @@ function EndingScreen({ block, onExit }) {
 }
 
 function ExerciseVisual({ videoRec, svg, size = "sm" }) {
-    const wrap = size === "lg" ? "w-72 sm:w-96" : "w-40 sm:w-56";
+    // YouTube — respect the source's native orientation.
     if (videoRec?.kind === "youtube" && videoRec.embed_url) {
+        const isPortrait = videoRec.orientation === "portrait";
+        const wrap = isPortrait
+            ? "w-64 sm:w-80 aspect-[9/16]"
+            : "w-full max-w-2xl aspect-video";
         return (
-            <div className={`${wrap} aspect-square bg-obsidian hairline overflow-hidden`}>
+            <div
+                className={`${wrap} bg-obsidian hairline overflow-hidden`}
+                data-testid={`player-visual-yt-${isPortrait ? "portrait" : "landscape"}`}
+            >
                 <iframe
                     src={videoRec.embed_url}
                     title={videoRec.exercise_name}
@@ -440,12 +447,16 @@ function ExerciseVisual({ videoRec, svg, size = "sm" }) {
             </div>
         );
     }
+    // Uploaded clip — let the <video> use its intrinsic aspect ratio.
     if (videoRec?.kind === "upload" && videoRec.url) {
         return (
-            <div className={`${wrap} aspect-square bg-obsidian hairline overflow-hidden`}>
+            <div
+                className="w-full max-w-2xl bg-obsidian hairline overflow-hidden flex items-center justify-center"
+                data-testid="player-visual-upload"
+            >
                 <video
                     src={absUrl(videoRec.url)}
-                    className="w-full h-full object-cover"
+                    className="w-full h-auto max-h-[70vh] object-contain"
                     autoPlay
                     loop
                     muted
@@ -455,6 +466,8 @@ function ExerciseVisual({ videoRec, svg, size = "sm" }) {
             </div>
         );
     }
+    // SVG fallback — original small size.
+    const wrap = size === "lg" ? "w-72 sm:w-96" : "w-40 sm:w-56";
     return (
         <div className={wrap}>
             <ExerciseSvg id={svg} />
