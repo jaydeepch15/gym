@@ -1,0 +1,216 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============ 42+ COMEBACK — PERFORMANCE PRO ============
+   Palette: Obsidian black, Bone paper, Blaze red, Chalk yellow.
+   Typefaces: Anton (display SCREAM), IBM Plex Sans (body), JetBrains Mono (timer + labels).
+   ======================================================= */
+
+@layer base {
+    :root {
+        /* dark-mode-first — the app runs in dark */
+        --background: 240 6% 5%; /* #0B0B0D obsidian */
+        --foreground: 40 30% 92%; /* #F0EAD9 bone */
+        --card: 240 6% 8%;
+        --card-foreground: 40 30% 92%;
+        --popover: 240 6% 7%;
+        --popover-foreground: 40 30% 92%;
+        --primary: 356 78% 51%; /* #DC2626 blaze */
+        --primary-foreground: 40 30% 96%;
+        --secondary: 240 5% 14%;
+        --secondary-foreground: 40 30% 92%;
+        --muted: 240 5% 12%;
+        --muted-foreground: 40 8% 65%;
+        --accent: 45 95% 55%; /* chalk yellow */
+        --accent-foreground: 240 6% 5%;
+        --destructive: 356 78% 51%;
+        --destructive-foreground: 40 30% 96%;
+        --border: 240 5% 18%;
+        --input: 240 5% 14%;
+        --ring: 356 78% 51%;
+        --radius: 0.25rem;
+
+        --blaze: 356 78% 51%;
+        --chalk: 45 95% 55%;
+        --bone: 40 30% 92%;
+        --obsidian: 240 6% 5%;
+        --iron: 240 5% 14%;
+        --graphite: 240 5% 18%;
+    }
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+    html,
+    body,
+    #root {
+        min-height: 100%;
+        background-color: hsl(var(--background));
+        color: hsl(var(--foreground));
+    }
+    body {
+        font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        background-image:
+            radial-gradient(
+                circle at 20% -10%,
+                hsl(356 78% 51% / 0.08),
+                transparent 55%
+            ),
+            radial-gradient(
+                circle at 100% 100%,
+                hsl(45 95% 55% / 0.04),
+                transparent 45%
+            );
+        background-attachment: fixed;
+    }
+    ::selection {
+        background: hsl(var(--primary));
+        color: hsl(var(--primary-foreground));
+    }
+}
+
+@layer components {
+    .font-display {
+        font-family: "Anton", "Bebas Neue", Impact, sans-serif;
+        letter-spacing: 0.01em;
+        font-weight: 400;
+    }
+    .font-mono-num {
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-variant-numeric: tabular-nums;
+    }
+    .grain::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 0;
+        opacity: 0.06;
+        mix-blend-mode: overlay;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.9  0 0 0 0 0.9  0 0 0 0 0.9  0 0 0 0.6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    }
+
+    .hairline {
+        border: 1px solid hsl(var(--graphite));
+    }
+    .hairline-b {
+        border-bottom: 1px solid hsl(var(--graphite));
+    }
+    .hairline-t {
+        border-top: 1px solid hsl(var(--graphite));
+    }
+
+    .btn-blaze {
+        background: hsl(var(--primary));
+        color: hsl(var(--primary-foreground));
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        font-weight: 700;
+        transition:
+            transform 120ms ease,
+            box-shadow 120ms ease,
+            background 120ms ease;
+    }
+    .btn-blaze:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 0 -2px hsl(356 78% 30%);
+    }
+    .btn-blaze:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 0 -1px hsl(356 78% 30%);
+    }
+
+    .kbd {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.72rem;
+        padding: 2px 6px;
+        border: 1px solid hsl(var(--graphite));
+        background: hsl(var(--iron));
+        color: hsl(var(--muted-foreground));
+        border-radius: 3px;
+    }
+
+    /* huge timer digits */
+    .timer-digits {
+        font-family: "Anton", "Bebas Neue", Impact, sans-serif;
+        letter-spacing: -0.02em;
+        line-height: 0.8;
+    }
+
+    .stat-label {
+        font-family: "JetBrains Mono", monospace;
+        text-transform: uppercase;
+        letter-spacing: 0.24em;
+        font-size: 0.7rem;
+        color: hsl(var(--muted-foreground));
+    }
+
+    .ticker {
+        overflow: hidden;
+        white-space: nowrap;
+    }
+    .ticker-inner {
+        display: inline-block;
+        animation: ticker-marquee 40s linear infinite;
+    }
+    @keyframes ticker-marquee {
+        from {
+            transform: translateX(0);
+        }
+        to {
+            transform: translateX(-50%);
+        }
+    }
+
+    .pulse-dot::before {
+        content: "";
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        margin-right: 8px;
+        border-radius: 50%;
+        background: hsl(var(--primary));
+        box-shadow: 0 0 0 0 hsl(356 78% 51% / 0.7);
+        animation: pulse 1.6s infinite;
+        vertical-align: middle;
+    }
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 hsl(356 78% 51% / 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 12px hsl(356 78% 51% / 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 hsl(356 78% 51% / 0);
+        }
+    }
+
+    /* subtle CSS "motion" for SVG exercise figures */
+    @keyframes exercise-bob {
+        0%,
+        100% {
+            transform: translateY(0);
+        }
+        50% {
+            transform: translateY(-4px);
+        }
+    }
+    .exercise-anim {
+        animation: exercise-bob 2.4s ease-in-out infinite;
+        transform-origin: center;
+    }
+
+    .stripe-bg {
+        background-image: repeating-linear-gradient(
+            135deg,
+            hsl(var(--graphite)) 0 1px,
+            transparent 1px 12px
+        );
+    }
+}
