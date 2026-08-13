@@ -247,7 +247,7 @@ export default function SessionPlayer() {
 
             {/* Top bar */}
             <div className="fixed inset-x-0 top-0 z-30 hairline-b bg-obsidian/70 backdrop-blur-sm">
-                <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+                <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
                     <button
                         data-testid={TID.playerExitBtn}
                         onClick={() => nav("/")}
@@ -292,7 +292,7 @@ export default function SessionPlayer() {
             </div>
 
             {/* Content */}
-            <main className="pt-24 pb-40 max-w-6xl mx-auto px-4 sm:px-6 min-h-screen flex items-start justify-center">
+            <main className="pt-24 pb-40 max-w-5xl mx-auto px-4 sm:px-6 min-h-screen flex items-start justify-center">
                 {phase === "done" ? (
                     <EndingScreen block={block} onExit={() => nav("/")} sessionId={session.id} />
                 ) : block?.kind === "title" ? (
@@ -312,7 +312,7 @@ export default function SessionPlayer() {
 
             {/* Bottom controls */}
             <div className="fixed inset-x-0 bottom-0 z-30 hairline-t bg-obsidian/80 backdrop-blur-sm">
-                <div className="max-w-6xl mx-auto px-4 sm:px-6 h-24 flex items-center justify-between gap-3">
+                <div className="max-w-5xl mx-auto px-4 sm:px-6 h-24 flex items-center justify-between gap-3">
                     <button
                         data-testid={TID.playerPrevBtn}
                         onClick={gotoPrev}
@@ -424,11 +424,7 @@ function EndingScreen({ block, onExit }) {
 }
 
 function ExerciseVisual({ videoRec, svg, size = "sm" }) {
-    // Larger windows so cues stay readable from a few steps back.
-    const wrap =
-        size === "lg"
-            ? "w-full max-w-[38rem]"
-            : "w-72 sm:w-96";
+    const wrap = size === "lg" ? "w-72 sm:w-96" : "w-40 sm:w-56";
     if (videoRec?.kind === "youtube" && videoRec.embed_url) {
         return (
             <div className={`${wrap} aspect-square bg-obsidian hairline overflow-hidden`}>
@@ -543,7 +539,7 @@ function ExerciseScreen({ block, phase, remaining, setIdx, videoRec }) {
                 {block.name}
             </h2>
 
-            <div className="grid lg:grid-cols-[3fr_2fr] gap-8 items-center">
+            <div className="grid lg:grid-cols-2 gap-8 items-center">
                 <div className="flex flex-col items-center">
                     {isRest ? (
                         <TimerRing
