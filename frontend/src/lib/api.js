@@ -34,6 +34,8 @@ export const api = {
             })
             .then((r) => r.data);
     },
+    linkYoutube: (exercise_name, url) =>
+        client.post("/videos/youtube", { exercise_name, url }).then((r) => r.data),
     deleteVideo: (id) => client.delete(`/videos/${id}`).then((r) => r.data),
 };
 

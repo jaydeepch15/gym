@@ -425,7 +425,22 @@ function EndingScreen({ block, onExit }) {
 
 function ExerciseVisual({ videoRec, svg, size = "sm" }) {
     const wrap = size === "lg" ? "w-72 sm:w-96" : "w-40 sm:w-56";
-    if (videoRec) {
+    if (videoRec?.kind === "youtube" && videoRec.embed_url) {
+        return (
+            <div className={`${wrap} aspect-square bg-obsidian hairline overflow-hidden`}>
+                <iframe
+                    src={videoRec.embed_url}
+                    title={videoRec.exercise_name}
+                    className="w-full h-full pointer-events-none"
+                    frameBorder="0"
+                    allow="autoplay; encrypted-media; picture-in-picture"
+                    allowFullScreen
+                    data-testid={`player-yt-${videoRec.exercise_name.toLowerCase().replace(/\s+/g, "-")}`}
+                />
+            </div>
+        );
+    }
+    if (videoRec?.kind === "upload" && videoRec.url) {
         return (
             <div className={`${wrap} aspect-square bg-obsidian hairline overflow-hidden`}>
                 <video

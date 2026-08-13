@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
+import re
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict
@@ -79,19 +80,60 @@ class VideoRecord(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     exercise_name: str
-    filename: str
-    original_name: str
-    content_type: str
-    size_bytes: int
+    kind: str = "upload"  # "upload" | "youtube"
+    # upload fields
+    filename: Optional[str] = None
+    original_name: Optional[str] = None
+    content_type: Optional[str] = None
+    size_bytes: Optional[int] = None
+    # youtube fields
+    youtube_id: Optional[str] = None
+    youtube_url: Optional[str] = None
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 
-def _video_url(filename: str) -> str:
-    return f"/api/uploads/{filename}"
+class YoutubeLinkPayload(BaseModel):
+    exercise_name: str
+    url: str
+
+
+_YT_RE = re.compile(r"(?:v=|/shorts/|/embed/|/live/|youtu\.be/)([A-Za-z0-9_-]{11})")
+
+
+def _extract_youtube_id(url: str) -> Optional[str]:
+    if not url:
+        return None
+    m = _YT_RE.search(url)
+    return m.group(1) if m else None
 
 
 def _serialize_video(doc: Dict[str, Any]) -> Dict[str, Any]:
-    return {**doc, "url": _video_url(doc["filename"])}
+    out = dict(doc)
+    kind = doc.get("kind", "upload")
+    if kind == "upload" and doc.get("filename"):
+        out["url"] = f"/api/uploads/{doc['filename']}"
+    elif kind == "youtube" and doc.get("youtube_id"):
+        yid = doc["youtube_id"]
+        params = (
+            f"autoplay=1&mute=1&loop=1&playlist={yid}"
+            "&controls=0&modestbranding=1&rel=0&playsinline=1&disablekb=1&iv_load_policy=3"
+        )
+        out["embed_url"] = f"https://www.youtube.com/embed/{yid}?{params}"
+        out["thumbnail_url"] = f"https://i.ytimg.com/vi/{yid}/hqdefault.jpg"
+        out["url"] = doc.get("youtube_url")
+    return out
+
+
+async def _clear_existing_video_for(exercise_name: str) -> None:
+    """Remove any current record (upload OR youtube) for this exercise, unlinking files."""
+    old = await db.videos.find({"exercise_name": exercise_name}, {"_id": 0}).to_list(100)
+    for p in old:
+        if p.get("kind", "upload") == "upload" and p.get("filename"):
+            try:
+                (UPLOAD_DIR / p["filename"]).unlink(missing_ok=True)
+            except Exception:
+                pass
+    await db.videos.delete_many({"exercise_name": exercise_name})
 
 
 # ---------- Startup: nothing to seed in DB (sessions are code-defined) ----------
@@ -291,21 +333,32 @@ async def upload_video(
                 raise HTTPException(status_code=413, detail=f"video too large (max {MAX_VIDEO_BYTES // (1024*1024)} MB)")
             f.write(chunk)
 
-    # one video per exercise — replace any previous
-    old = await db.videos.find({"exercise_name": exercise_name}, {"_id": 0}).to_list(100)
-    for p in old:
-        try:
-            (UPLOAD_DIR / p["filename"]).unlink(missing_ok=True)
-        except Exception:
-            pass
-    await db.videos.delete_many({"exercise_name": exercise_name})
+    # one video per exercise — replace any previous (upload OR youtube)
+    await _clear_existing_video_for(exercise_name)
 
     rec = VideoRecord(
         exercise_name=exercise_name,
+        kind="upload",
         filename=fname,
         original_name=file.filename or fname,
         content_type=ctype or "video/mp4",
         size_bytes=size,
+    )
+    await db.videos.insert_one(rec.model_dump())
+    return _serialize_video(rec.model_dump())
+
+
+@api.post("/videos/youtube")
+async def link_youtube(payload: YoutubeLinkPayload):
+    yid = _extract_youtube_id(payload.url)
+    if not yid:
+        raise HTTPException(status_code=400, detail="could not parse a YouTube video id from that URL")
+    await _clear_existing_video_for(payload.exercise_name)
+    rec = VideoRecord(
+        exercise_name=payload.exercise_name,
+        kind="youtube",
+        youtube_id=yid,
+        youtube_url=payload.url.strip(),
     )
     await db.videos.insert_one(rec.model_dump())
     return _serialize_video(rec.model_dump())
@@ -330,10 +383,11 @@ async def delete_video(video_id: str):
     doc = await db.videos.find_one({"id": video_id}, {"_id": 0})
     if not doc:
         raise HTTPException(status_code=404, detail="video not found")
-    try:
-        (UPLOAD_DIR / doc["filename"]).unlink(missing_ok=True)
-    except Exception:
-        pass
+    if doc.get("kind", "upload") == "upload" and doc.get("filename"):
+        try:
+            (UPLOAD_DIR / doc["filename"]).unlink(missing_ok=True)
+        except Exception:
+            pass
     await db.videos.delete_one({"id": video_id})
     return {"ok": True}
 
