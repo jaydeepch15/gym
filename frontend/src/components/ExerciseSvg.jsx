@@ -15,7 +15,6 @@ const S = ({ children }) => (
         width="100%"
         height="100%"
         preserveAspectRatio="xMidYMid meet"
-        style={{ maxWidth: 340 }}
         role="img"
     >
         <defs>
