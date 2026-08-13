@@ -4,7 +4,7 @@ import { api } from "../lib/api";
 import SessionCard from "../components/SessionCard";
 import WeekCalendar from "../components/WeekCalendar";
 import { TID } from "../lib/testIds";
-import { ChevronLeft, ChevronRight, ClipboardList, Dumbbell, ShieldAlert } from "lucide-react";
+import { ChevronLeft, ChevronRight, ClipboardList, Dumbbell, ShieldAlert, Film } from "lucide-react";
 
 const DAY_MAP = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 
@@ -71,6 +71,14 @@ export default function Home() {
                         </span>
                     </div>
                     <div className="flex items-center gap-4">
+                        <Link
+                            to="/videos"
+                            data-testid={TID.videosLink}
+                            className="flex items-center gap-2 text-muted-foreground hover:text-bone transition-colors"
+                        >
+                            <Film size={14} />
+                            <span className="font-mono tracking-[0.2em]">CLIPS</span>
+                        </Link>
                         <Link
                             to="/logs"
                             data-testid={TID.logsLink}

@@ -35,6 +35,14 @@ export const TID = {
     logsList: "logs-list",
     logsSuggestion: "logs-suggestion",
 
+    // videos
+    videosScreen: "videos-screen",
+    videosLink: "videos-link",
+    videoRow: (name) => `video-row-${name.toLowerCase().replace(/\s+/g, "-")}`,
+    videoUploadInput: (name) => `video-upload-input-${name.toLowerCase().replace(/\s+/g, "-")}`,
+    videoDeleteBtn: (name) => `video-delete-btn-${name.toLowerCase().replace(/\s+/g, "-")}`,
+    videoPreview: (name) => `video-preview-${name.toLowerCase().replace(/\s+/g, "-")}`,
+
     // match-day checklist
     checklistItem: (i) => `checklist-item-${i}`,
     checklistDone: "checklist-done-btn",

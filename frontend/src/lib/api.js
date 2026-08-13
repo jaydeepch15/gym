@@ -18,6 +18,24 @@ export const api = {
     deleteLog: (id) => client.delete(`/logs/${id}`).then((r) => r.data),
     getSuggestion: (exercise_name) =>
         client.get("/logs/suggestion", { params: { exercise_name } }).then((r) => r.data),
+    listExercises: () => client.get("/exercises").then((r) => r.data),
+    listVideos: () => client.get("/videos").then((r) => r.data),
+    uploadVideo: (exercise_name, file, onProgress) => {
+        const fd = new FormData();
+        fd.append("exercise_name", exercise_name);
+        fd.append("file", file);
+        return client
+            .post("/videos", fd, {
+                headers: { "Content-Type": "multipart/form-data" },
+                onUploadProgress: (e) => {
+                    if (onProgress && e.total) onProgress(Math.round((e.loaded / e.total) * 100));
+                },
+                timeout: 300_000,
+            })
+            .then((r) => r.data);
+    },
+    deleteVideo: (id) => client.delete(`/videos/${id}`).then((r) => r.data),
 };
 
 export const ttsUrl = () => `${API}/tts`;
+export const absUrl = (path) => `${BACKEND_URL}${path}`;

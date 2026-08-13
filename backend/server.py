@@ -1,5 +1,6 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Query
+from fastapi import FastAPI, APIRouter, HTTPException, Query, UploadFile, File, Form
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -16,6 +17,11 @@ from tts_service import get_or_generate_audio, DEFAULT_VOICE, DEFAULT_MODEL
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / ".env")
+
+UPLOAD_DIR = ROOT_DIR / "uploads"
+UPLOAD_DIR.mkdir(exist_ok=True)
+ALLOWED_VIDEO_EXT = {".mp4", ".mov", ".webm", ".m4v"}
+MAX_VIDEO_BYTES = 100 * 1024 * 1024  # 100 MB
 
 mongo_url = os.environ["MONGO_URL"]
 client = AsyncIOMotorClient(mongo_url)
@@ -67,6 +73,25 @@ class WeekUpdate(BaseModel):
 class TTSRequest(BaseModel):
     text: str
     voice: Optional[str] = None
+
+
+class VideoRecord(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    exercise_name: str
+    filename: str
+    original_name: str
+    content_type: str
+    size_bytes: int
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
+def _video_url(filename: str) -> str:
+    return f"/api/uploads/{filename}"
+
+
+def _serialize_video(doc: Dict[str, Any]) -> Dict[str, Any]:
+    return {**doc, "url": _video_url(doc["filename"])}
 
 
 # ---------- Startup: nothing to seed in DB (sessions are code-defined) ----------
@@ -209,7 +234,114 @@ async def health():
     return {"ok": True, "ts": datetime.now(timezone.utc).isoformat()}
 
 
+# ---------- Exercise catalog ----------
+@api.get("/exercises")
+async def list_exercises():
+    """All named movements across sessions, de-duplicated. Used by the Videos page."""
+    seen: Dict[str, Dict[str, Any]] = {}
+    for s in ALL_SESSIONS:
+        for b in s.get("blocks", []):
+            if b.get("kind") not in ("exercise", "timed"):
+                continue
+            name = b.get("name")
+            if not name or name in seen:
+                # keep first occurrence but note additional session
+                if name and s["id"] not in seen[name]["sessions"]:
+                    seen[name]["sessions"].append(s["id"])
+                continue
+            seen[name] = {
+                "name": name,
+                "svg": b.get("svg"),
+                "kind": b.get("kind"),
+                "sessions": [s["id"]],
+            }
+    return list(seen.values())
+
+
+# ---------- User-uploaded form videos ----------
+@api.post("/videos")
+async def upload_video(
+    exercise_name: str = Form(...),
+    file: UploadFile = File(...),
+):
+    ctype = (file.content_type or "").lower()
+    ext = Path(file.filename or "").suffix.lower()
+    if ext not in ALLOWED_VIDEO_EXT and not ctype.startswith("video/"):
+        raise HTTPException(status_code=400, detail="only .mp4/.mov/.webm/.m4v videos allowed")
+    if ext not in ALLOWED_VIDEO_EXT:
+        ext = ".mp4"
+
+    vid = str(uuid.uuid4())
+    fname = f"{vid}{ext}"
+    dest = UPLOAD_DIR / fname
+
+    size = 0
+    with dest.open("wb") as f:
+        while True:
+            chunk = await file.read(1 << 20)
+            if not chunk:
+                break
+            size += len(chunk)
+            if size > MAX_VIDEO_BYTES:
+                f.close()
+                try:
+                    dest.unlink(missing_ok=True)
+                except Exception:
+                    pass
+                raise HTTPException(status_code=413, detail=f"video too large (max {MAX_VIDEO_BYTES // (1024*1024)} MB)")
+            f.write(chunk)
+
+    # one video per exercise — replace any previous
+    old = await db.videos.find({"exercise_name": exercise_name}, {"_id": 0}).to_list(100)
+    for p in old:
+        try:
+            (UPLOAD_DIR / p["filename"]).unlink(missing_ok=True)
+        except Exception:
+            pass
+    await db.videos.delete_many({"exercise_name": exercise_name})
+
+    rec = VideoRecord(
+        exercise_name=exercise_name,
+        filename=fname,
+        original_name=file.filename or fname,
+        content_type=ctype or "video/mp4",
+        size_bytes=size,
+    )
+    await db.videos.insert_one(rec.model_dump())
+    return _serialize_video(rec.model_dump())
+
+
+@api.get("/videos")
+async def list_videos():
+    rows = await db.videos.find({}, {"_id": 0}).to_list(1000)
+    return [_serialize_video(r) for r in rows]
+
+
+@api.get("/videos/by-exercise")
+async def get_video_by_exercise(exercise_name: str = Query(...)):
+    doc = await db.videos.find_one({"exercise_name": exercise_name}, {"_id": 0})
+    if not doc:
+        return {"video": None}
+    return {"video": _serialize_video(doc)}
+
+
+@api.delete("/videos/{video_id}")
+async def delete_video(video_id: str):
+    doc = await db.videos.find_one({"id": video_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="video not found")
+    try:
+        (UPLOAD_DIR / doc["filename"]).unlink(missing_ok=True)
+    except Exception:
+        pass
+    await db.videos.delete_one({"id": video_id})
+    return {"ok": True}
+
+
 app.include_router(api)
+
+# Serve uploaded videos as static files under /api/uploads/<filename>
+app.mount("/api/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 
 app.add_middleware(
     CORSMiddleware,

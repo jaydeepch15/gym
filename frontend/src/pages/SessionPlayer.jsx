@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { api } from "../lib/api";
+import { api, absUrl } from "../lib/api";
 import { tts } from "../lib/audio";
 import TimerRing from "../components/TimerRing";
 import ExerciseSvg from "../components/ExerciseSvg";
@@ -63,13 +63,21 @@ export default function SessionPlayer() {
     const [paused, setPaused] = useState(false);
     const [muted, setMuted] = useState(false);
     const [musicOn, setMusicOn] = useState(false);
+    const [videos, setVideos] = useState({}); // exercise_name -> record
     const musicRef = useRef(null);
     const spokenRef = useRef(new Set());
 
-    // Load session
+    // Load session + user videos
     useEffect(() => {
         api.getSession(id).then(setSession).catch(() => nav("/"));
     }, [id, nav]);
+    useEffect(() => {
+        api.listVideos().then((rows) => {
+            const m = {};
+            rows.forEach((r) => (m[r.exercise_name] = r));
+            setVideos(m);
+        }).catch(() => {});
+    }, []);
 
     useEffect(() => {
         tts.setMusic(musicRef);
@@ -296,9 +304,9 @@ export default function SessionPlayer() {
                 ) : block?.kind === "checklist" ? (
                     <MatchDayChecklist items={block.items} onDone={gotoNext} />
                 ) : block?.kind === "timed" ? (
-                    <TimedScreen block={block} phase={phase} remaining={remaining} />
+                    <TimedScreen block={block} phase={phase} remaining={remaining} videoRec={videos[block.name]} />
                 ) : block?.kind === "exercise" ? (
-                    <ExerciseScreen block={block} phase={phase} remaining={remaining} setIdx={setIdxState} />
+                    <ExerciseScreen block={block} phase={phase} remaining={remaining} setIdx={setIdxState} videoRec={videos[block.name]} />
                 ) : null}
             </main>
 
@@ -415,7 +423,31 @@ function EndingScreen({ block, onExit }) {
     );
 }
 
-function TimedScreen({ block, phase, remaining }) {
+function ExerciseVisual({ videoRec, svg, size = "sm" }) {
+    const wrap = size === "lg" ? "w-72 sm:w-96" : "w-40 sm:w-56";
+    if (videoRec) {
+        return (
+            <div className={`${wrap} aspect-square bg-obsidian hairline overflow-hidden`}>
+                <video
+                    src={absUrl(videoRec.url)}
+                    className="w-full h-full object-cover"
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    data-testid={`player-video-${videoRec.exercise_name.toLowerCase().replace(/\s+/g, "-")}`}
+                />
+            </div>
+        );
+    }
+    return (
+        <div className={wrap}>
+            <ExerciseSvg id={svg} />
+        </div>
+    );
+}
+
+function TimedScreen({ block, phase, remaining, videoRec }) {
     const isRest = phase === "rest";
     return (
         <div className="w-full grid lg:grid-cols-2 gap-8 items-center animate-fade-up">
@@ -436,8 +468,8 @@ function TimedScreen({ block, phase, remaining }) {
                 >
                     {block.name}
                 </h2>
-                <div className="w-40 sm:w-56 mb-4">
-                    <ExerciseSvg id={block.svg} />
+                <div className="mb-4">
+                    <ExerciseVisual videoRec={videoRec} svg={block.svg} size="sm" />
                 </div>
                 {block.cues?.length > 0 && (
                     <div className="mb-4">
@@ -460,7 +492,7 @@ function TimedScreen({ block, phase, remaining }) {
     );
 }
 
-function ExerciseScreen({ block, phase, remaining, setIdx }) {
+function ExerciseScreen({ block, phase, remaining, setIdx, videoRec }) {
     const isRest = phase === "rest";
     return (
         <div className="w-full animate-fade-up">
@@ -478,6 +510,11 @@ function ExerciseScreen({ block, phase, remaining, setIdx }) {
                 <div className="font-mono text-sm bg-iron px-3 py-1 hairline">
                     REST {block.rest}s
                 </div>
+                {videoRec && (
+                    <div className="font-mono text-[10px] bg-chalk text-obsidian px-2 py-1">
+                        YOUR CLIP
+                    </div>
+                )}
             </div>
 
             <h2
@@ -498,9 +535,7 @@ function ExerciseScreen({ block, phase, remaining, setIdx }) {
                             testId={TID.playerTimerDigits}
                         />
                     ) : (
-                        <div className="w-72 sm:w-96">
-                            <ExerciseSvg id={block.svg} />
-                        </div>
+                        <ExerciseVisual videoRec={videoRec} svg={block.svg} size="lg" />
                     )}
                     {!isRest && (
                         <div className="mt-6 stat-label text-chalk">
