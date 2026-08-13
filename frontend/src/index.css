@@ -206,6 +206,188 @@
         transform-origin: center;
     }
 
+    /* ---------- per-exercise motion ---------- */
+    /* SQUAT / LUNGE / BRIDGE — vertical descent/ascent */
+    @keyframes ex-squat {
+        0%, 100% { transform: translateY(0) scaleY(1); }
+        50% { transform: translateY(18px) scaleY(0.9); }
+    }
+    .anim-squat { animation: ex-squat 2.2s ease-in-out infinite; transform-origin: 110px 200px; }
+
+    @keyframes ex-bridge {
+        0%, 100% { transform: translateY(6px); }
+        50% { transform: translateY(-6px); }
+    }
+    .anim-bridge { animation: ex-bridge 2s ease-in-out infinite; transform-origin: center; }
+
+    /* HINGE (RDL) — rotate torso around hips */
+    @keyframes ex-hinge {
+        0%, 100% { transform: rotate(-2deg); }
+        50% { transform: rotate(-22deg); }
+    }
+    .anim-hinge { animation: ex-hinge 2.4s ease-in-out infinite; transform-origin: 150px 105px; }
+    @keyframes ex-hinge-bar {
+        0%, 100% { transform: translate(0, 0); }
+        50% { transform: translate(-6px, 32px); }
+    }
+    .anim-hinge-bar { animation: ex-hinge-bar 2.4s ease-in-out infinite; }
+
+    /* ROW — arms pull toward ribs */
+    @keyframes ex-row {
+        0%, 100% { transform: translateY(18px); }
+        50% { transform: translateY(-6px); }
+    }
+    .anim-row { animation: ex-row 1.8s ease-in-out infinite; }
+
+    /* OVERHEAD PRESS — bar + arms extend up */
+    @keyframes ex-ohp {
+        0%, 100% { transform: translateY(18px); }
+        50% { transform: translateY(-14px); }
+    }
+    .anim-ohp { animation: ex-ohp 2s ease-in-out infinite; }
+
+    /* CURL — forearm rotates */
+    @keyframes ex-curl {
+        0%, 100% { transform: rotate(0deg); }
+        50% { transform: rotate(-70deg); }
+    }
+    .anim-curl-left { animation: ex-curl 1.6s ease-in-out infinite; transform-origin: 110px 105px; }
+    .anim-curl-right { animation: ex-curl 1.6s ease-in-out infinite reverse; transform-origin: 110px 105px; }
+
+    /* FLOOR PRESS — bar goes up/down */
+    @keyframes ex-floorpress {
+        0%, 100% { transform: translateY(28px); }
+        50% { transform: translateY(-2px); }
+    }
+    .anim-floorpress { animation: ex-floorpress 1.8s ease-in-out infinite; }
+
+    /* SHRUG — shoulders lift */
+    @keyframes ex-shrug {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-6px); }
+    }
+    .anim-shrug { animation: ex-shrug 1.4s ease-in-out infinite; }
+
+    /* CAT-COW arch flip */
+    @keyframes ex-catcow {
+        0%, 100% { transform: translateY(0) scaleY(1); }
+        50% { transform: translateY(6px) scaleY(-0.9); }
+    }
+    .anim-catcow { animation: ex-catcow 2.6s ease-in-out infinite; transform-origin: 110px 160px; }
+
+    /* BREATHING orb pulse */
+    @keyframes ex-breath {
+        0%, 100% { transform: scale(1); opacity: .9; }
+        50% { transform: scale(1.25); opacity: 1; }
+    }
+    .anim-breath { animation: ex-breath 3.6s ease-in-out infinite; transform-origin: 110px 110px; transform-box: fill-box; }
+
+    /* CIRCULAR — neck, shoulder, hip circles, arm circles */
+    @keyframes ex-rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    .anim-rotate-slow { animation: ex-rotate 4s linear infinite; transform-origin: center; }
+    .anim-rotate-med { animation: ex-rotate 2.4s linear infinite; transform-origin: center; }
+
+    /* LEG SWING */
+    @keyframes ex-leg-swing {
+        0%, 100% { transform: rotate(-40deg); }
+        50% { transform: rotate(30deg); }
+    }
+    .anim-legswing { animation: ex-leg-swing 1.6s ease-in-out infinite; transform-origin: 110px 150px; }
+
+    /* JOG / WALK — alternating legs */
+    @keyframes ex-leg-a {
+        0%, 100% { transform: rotate(-25deg); }
+        50% { transform: rotate(25deg); }
+    }
+    @keyframes ex-leg-b {
+        0%, 100% { transform: rotate(25deg); }
+        50% { transform: rotate(-25deg); }
+    }
+    .anim-leg-a { animation: ex-leg-a 0.9s ease-in-out infinite; transform-origin: 110px 140px; }
+    .anim-leg-b { animation: ex-leg-b 0.9s ease-in-out infinite; transform-origin: 110px 140px; }
+    .anim-arm-a { animation: ex-leg-b 0.9s ease-in-out infinite; transform-origin: 110px 100px; }
+    .anim-arm-b { animation: ex-leg-a 0.9s ease-in-out infinite; transform-origin: 110px 100px; }
+
+    /* BAT SWING */
+    @keyframes ex-batswing {
+        0% { transform: rotate(-60deg); }
+        50% { transform: rotate(80deg); }
+        100% { transform: rotate(-60deg); }
+    }
+    .anim-batswing { animation: ex-batswing 2s ease-in-out infinite; transform-origin: 110px 100px; }
+
+    /* THROW */
+    @keyframes ex-throw {
+        0% { transform: rotate(-80deg); }
+        60% { transform: rotate(30deg); }
+        100% { transform: rotate(-80deg); }
+    }
+    .anim-throw { animation: ex-throw 1.6s ease-in-out infinite; transform-origin: 110px 100px; }
+
+    /* DEAD BUG — alternating limbs */
+    @keyframes ex-deadbug-a {
+        0%, 100% { transform: translate(0, 0); opacity: 1; }
+        50% { transform: translate(-8px, -18px); opacity: .6; }
+    }
+    @keyframes ex-deadbug-b {
+        0%, 100% { transform: translate(0, 0); opacity: .6; }
+        50% { transform: translate(8px, -18px); opacity: 1; }
+    }
+    .anim-deadbug-a { animation: ex-deadbug-a 1.8s ease-in-out infinite; }
+    .anim-deadbug-b { animation: ex-deadbug-b 1.8s ease-in-out infinite; }
+
+    /* PLANK / SIDE PLANK / HOLLOW — subtle brace */
+    @keyframes ex-brace {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(2px); }
+    }
+    .anim-brace { animation: ex-brace 2.4s ease-in-out infinite; }
+
+    /* CROSS-BODY SHOULDER — sweep */
+    @keyframes ex-cross {
+        0%, 100% { transform: translateX(0); }
+        50% { transform: translateX(-12px); }
+    }
+    .anim-cross { animation: ex-cross 2.4s ease-in-out infinite; }
+
+    /* T-SPINE book opener — rotate upper arm */
+    @keyframes ex-tspine {
+        0%, 100% { transform: rotate(0deg); }
+        50% { transform: rotate(-60deg); }
+    }
+    .anim-tspine { animation: ex-tspine 2.6s ease-in-out infinite; transform-origin: 130px 130px; }
+
+    /* HIP 90/90 — flip */
+    @keyframes ex-hip9090 {
+        0%, 100% { transform: scaleX(1); }
+        50% { transform: scaleX(-1); }
+    }
+    .anim-hip9090 { animation: ex-hip9090 3s ease-in-out infinite; transform-origin: 110px 150px; }
+
+    /* WORLD'S GREATEST STRETCH — arm sweep up */
+    @keyframes ex-wgs {
+        0%, 100% { transform: rotate(-90deg); }
+        50% { transform: rotate(10deg); }
+    }
+    .anim-wgs { animation: ex-wgs 2.6s ease-in-out infinite; transform-origin: 90px 108px; }
+
+    /* HAM STRETCH — hinge deeper */
+    @keyframes ex-ham {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-6px); }
+    }
+    .anim-ham { animation: ex-ham 2.4s ease-in-out infinite; }
+
+    /* CHEST OPEN — subtle expand */
+    @keyframes ex-chestopen {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+    .anim-chestopen { animation: ex-chestopen 2.6s ease-in-out infinite; transform-origin: 110px 130px; }
+
     .stripe-bg {
         background-image: repeating-linear-gradient(
             135deg,
