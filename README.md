@@ -189,6 +189,58 @@ tail -f /var/log/supervisor/frontend.err.log
 
 ---
 
+## Running with Docker
+
+The repo ships with a full Docker setup — one `docker-compose.yml` at the root, plus a `Dockerfile` in each of `backend/` and `frontend/`. It spins up **MongoDB**, the **FastAPI backend**, and the **built React frontend** (served by nginx).
+
+### 1. Create your env file
+
+```bash
+cp .env.example .env
+# edit .env and fill in EMERGENT_LLM_KEY if you want the TTS voiceover
+```
+
+### 2. Build and start everything
+
+```bash
+docker compose up --build
+```
+
+That's it. Once containers are healthy:
+
+- Frontend: **http://localhost:3000**
+- Backend API: **http://localhost:8001/api/health**
+- MongoDB: `mongodb://localhost:27017` (database name: `comeback`)
+
+### 3. Common commands
+
+```bash
+docker compose logs -f backend        # tail backend logs
+docker compose logs -f frontend       # tail nginx logs
+docker compose down                   # stop
+docker compose down -v                # stop and wipe persisted volumes
+docker compose up --build backend     # rebuild only one service
+```
+
+### 4. Data that persists across restarts
+
+| Volume | Purpose |
+|---|---|
+| `mongo_data` | MongoDB documents (state, logs, video records) |
+| `backend_uploads` | Your uploaded form videos |
+| `backend_tts_cache` | Cached TTS mp3 files (one per unique coaching line) |
+
+Wipe them all with `docker compose down -v`.
+
+### 5. Notes
+
+- The frontend is built as a static bundle and served by nginx — this is a production build, not a dev server. To develop, run the workspace under supervisor instead (`yarn start` in `frontend/`).
+- `REACT_APP_BACKEND_URL` is **baked into the frontend at build time** (Create React App behavior). If you change it, rebuild the frontend image: `docker compose build frontend`.
+- If port `3000`, `8001`, or `27017` is already in use on your machine, edit the `ports:` mapping in `docker-compose.yml`.
+- The `EMERGENT_LLM_KEY` is optional. Without it the app runs, exercises loop, videos play — only the audio voiceover fails silently.
+
+---
+
 ## Testing
 
 - Backend integration tests live in `/app/backend/tests/` (pytest)

@@ -1,0 +1,46 @@
+services:
+    mongo:
+        image: mongo:7
+        container_name: comeback-mongo
+        restart: unless-stopped
+        ports:
+            - "27017:27017"
+        volumes:
+            - mongo_data:/data/db
+
+    backend:
+        build:
+            context: ./backend
+        container_name: comeback-backend
+        restart: unless-stopped
+        depends_on:
+            - mongo
+        environment:
+            MONGO_URL: mongodb://mongo:27017
+            DB_NAME: comeback
+            CORS_ORIGINS: "*"
+            EMERGENT_LLM_KEY: ${EMERGENT_LLM_KEY:-}
+        ports:
+            - "8001:8001"
+        volumes:
+            # Persist user-uploaded form videos and TTS cache between rebuilds
+            - backend_uploads:/app/uploads
+            - backend_tts_cache:/app/tts_cache
+
+    frontend:
+        build:
+            context: ./frontend
+            args:
+                # Baked into the CRA bundle at build time.
+                REACT_APP_BACKEND_URL: ${REACT_APP_BACKEND_URL:-http://localhost:8001}
+        container_name: comeback-frontend
+        restart: unless-stopped
+        depends_on:
+            - backend
+        ports:
+            - "3000:3000"
+
+volumes:
+    mongo_data:
+    backend_uploads:
+    backend_tts_cache:
