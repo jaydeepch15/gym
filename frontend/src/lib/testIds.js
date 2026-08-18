@@ -8,6 +8,9 @@ export const TID = {
     phaseBadge: "phase-badge",
     startSessionBtn: (id) => `start-session-${id}-btn`,
     sessionCard: (id) => `session-card-${id}`,
+    sessionCardToggle: (id) => `session-card-toggle-${id}`,
+    sessionCardList: (id) => `session-card-list-${id}`,
+    sessionCardStart: (id) => `session-card-start-${id}`,
     weekCalendar: "week-calendar",
     logsLink: "logs-link",
 

@@ -154,8 +154,31 @@ async def on_startup():
 @api.get("/program")
 async def get_program():
     """Return the full program spec (phases, schedule, equipment, principles) + session summaries."""
-    session_summaries = [
-        {
+    def summarize(s: Dict[str, Any]) -> Dict[str, Any]:
+        exercises: List[Dict[str, Any]] = []
+        for b in s.get("blocks", []):
+            kind = b.get("kind")
+            if kind == "exercise":
+                exercises.append({
+                    "kind": "exercise",
+                    "name": b.get("name"),
+                    "sets": b.get("sets"),
+                    "reps": b.get("reps"),
+                    "rest": b.get("rest"),
+                })
+            elif kind == "timed":
+                exercises.append({
+                    "kind": "timed",
+                    "name": b.get("name"),
+                    "work": b.get("work"),
+                    "rest": b.get("rest"),
+                })
+            elif kind == "checklist":
+                exercises.append({
+                    "kind": "checklist",
+                    "name": b.get("heading") or "Checklist",
+                })
+        return {
             "id": s["id"],
             "code": s["code"],
             "title": s["title"],
@@ -163,9 +186,9 @@ async def get_program():
             "day": s["day"],
             "duration_min": s["duration_min"],
             "color": s["color"],
+            "exercises": exercises,
         }
-        for s in ALL_SESSIONS
-    ]
+    session_summaries = [summarize(s) for s in ALL_SESSIONS]
     return {"program": PROGRAM, "sessions": session_summaries}
 
 
